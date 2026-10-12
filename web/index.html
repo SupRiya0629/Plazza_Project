@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ EV Charging Network</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .header { text-align: center; color: white; margin-bottom: 30px; }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn {
+            padding: 12px 20px;
+            background: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .page {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .page.active { display: block; }
+        .form-section { margin-bottom: 25px; }
+        .form-section h3 { color: #333; margin-bottom: 15px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px; }
+        .form-group { }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #333; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1em;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .output {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .output.show { display: block; }
+        .success { background: #d4edda; color: #155724; border: 2px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 2px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 2px solid #bee5eb; }
+        .payment-page { text-align: center; }
+        .payment-page h2 { color: #667eea; margin-bottom: 30px; }
+        .bill-box {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 2px solid #667eea;
+        }
+        .bill-amount { font-size: 2.5em; color: #28a745; font-weight: bold; }
+        .payment-success {
+            background: #d4edda;
+            padding: 20px;
+            border-radius: 8px;
+            color: #155724;
+            display: none;
+        }
+        .payment-success.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ EV Charging Network</h1>
+            <p>Simple Charging Management System</p>
+        </div>
+
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('setup')">Setup</button>
+            <button class="tab-btn" onclick="showTab('charging')">Charging</button>
+            <button class="tab-btn" onclick="showTab('history')">History</button>
+            <button class="tab-btn" onclick="showTab('promo')">Promo</button>
+            <button class="tab-btn" onclick="showTab('demo')">Demo</button>
+        </div>
+
+        <!-- SETUP TAB -->
+        <div id="setup" class="page active">
+            <h2>Setup</h2>
+
+            <!-- Register Driver -->
+            <div class="form-section">
+                <h3>📝 Register Driver</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" id="driverName" placeholder="e.g., Raj Kumar">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="driverEmail" placeholder="e.g., raj@test.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="text" id="driverPhone" placeholder="e.g., 9876543210">
+                </div>
+                <button class="btn" onclick="registerDriver()">✓ Register Driver</button>
+                <div id="driverOutput" class="output"></div>
+            </div>
+
+            <!-- Register Station -->
+            <div class="form-section">
+                <h3>🔌 Register Station</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Station Name</label>
+                        <input type="text" id="stationName" placeholder="e.g., Central Hub">
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <select id="stationLocation">
+                            <option value="">Select Location</option>
+                            <option value="Guntur|16.3067|80.4365">Guntur (16.3067, 80.4365)</option>
+                            <option value="Bangalore|12.9716|77.5946">Bangalore (12.9716, 77.5946)</option>
+                            <option value="Mumbai|19.0760|72.8776">Mumbai (19.0760, 72.8776)</option>
+                            <option value="Delhi|28.6139|77.2090">Delhi (28.6139, 77.2090)</option>
+                            <option value="Hyderabad|17.3850|78.4867">Hyderabad (17.3850, 78.4867)</option>
+                            <option value="Chennai|13.0827|80.2707">Chennai (13.0827, 80.2707)</option>
+                        </select>
+                    </div>
+                </div>
+                <button class="btn" onclick="registerStation()">✓ Register Station</button>
+                <div id="stationOutput" class="output"></div>
+            </div>
+
+            <!-- Add Connector -->
+            <div class="form-section">
+                <h3>⚡ Add Connector</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Station ID</label>
+                        <input type="text" id="connectorStationId" placeholder="STN_001">
+                    </div>
+                    <div class="form-group">
+                        <label>Type</label>
+                        <select id="connectorType">
+                            <option value="AC">AC (Slow - Min ₹80)</option>
+                            <option value="DC">DC (Fast - Min ₹150)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Power (kW)</label>
+                    <input type="number" id="connectorPower" placeholder="e.g., 50" value="50">
+                </div>
+                <button class="btn" onclick="addConnector()">✓ Add Connector</button>
+                <button class="btn" style="background: #6c757d;" onclick="viewConnectors()">🔍 View Connectors</button>
+                <div id="connectorOutput" class="output"></div>
+            </div>
+        </div>
+
+        <!-- CHARGING TAB -->
+        <div id="charging" class="page">
+            <h2>Charging</h2>
+
+            <!-- Start Session -->
+            <div class="form-section">
+                <h3>▶️ Start Session</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Driver ID</label>
+                        <input type="text" id="sessionDriverId" placeholder="DRV_001">
+                    </div>
+                    <div class="form-group">
+                        <label>Station ID</label>
+                        <input type="text" id="sessionStationId" placeholder="STN_001">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Connector Type</label>
+                        <select id="sessionConnectorType">
+                            <option value="AC">AC (Slow)</option>
+                            <option value="DC">DC (Fast)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Promo Code (Optional)</label>
+                        <input type="text" id="sessionPromo" placeholder="e.g., SAVE20">
+                    </div>
+                </div>
+                <button class="btn" onclick="startSession()">▶️ Start Session</button>
+                <div id="startSessionOutput" class="output"></div>
+            </div>
+
+            <!-- End Session -->
+            <div class="form-section">
+                <h3>⏹️ End Session</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Session ID</label>
+                        <input type="text" id="endSessionId" placeholder="SES_001">
+                    </div>
+                    <div class="form-group">
+                        <label>Energy (kWh)</label>
+                        <input type="number" id="endSessionEnergy" placeholder="e.g., 20">
+                    </div>
+                </div>
+                <button class="btn" onclick="endSession()">⏹️ End Session</button>
+                <div id="endSessionOutput" class="output"></div>
+                <button class="btn" id="payBtn" style="display:none; background: #28a745; margin-top: 10px;" onclick="goToPayment()">💳 Pay Here</button>
+            </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="history" class="page">
+            <h2>History</h2>
+            <div class="form-section">
+                <h3>👤 View Sessions</h3>
+                <div class="form-group">
+                    <label>Driver ID</label>
+                    <input type="text" id="historyDriverId" placeholder="DRV_001">
+                </div>
+                <button class="btn" onclick="viewHistory()">📋 View History</button>
+                <div id="historyOutput" class="output"></div>
+            </div>
+        </div>
+
+        <!-- PROMO TAB -->
+        <div id="promo" class="page">
+            <h2>Promo Codes</h2>
+            <div class="form-section">
+                <h3>🎟️ Create Promo</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Code</label>
+                        <input type="text" id="promoCode" placeholder="e.g., SAVE20">
+                    </div>
+                    <div class="form-group">
+                        <label>Discount %</label>
+                        <input type="number" id="promoDiscount" placeholder="20">
+                    </div>
+                </div>
+                <button class="btn" onclick="createPromo()">➕ Create</button>
+                <div id="promoOutput" class="output"></div>
+            </div>
+        </div>
+
+        <!-- DEMO TAB -->
+        <div id="demo" class="page">
+            <h2>Demo Mode</h2>
+            <p style="margin-bottom: 20px;">Click below to load complete demo data with sample drivers, stations, and connectors!</p>
+            <button class="btn" onclick="loadDemo()" style="padding: 15px 30px; font-size: 1.1em;">🎯 Load Complete Demo</button>
+            <div id="demoOutput" class="output"></div>
+        </div>
+
+        <!-- PAYMENT PAGE -->
+        <div id="paymentPage" class="page">
+            <div class="payment-page">
+                <h2>💳 Payment</h2>
+                <div class="bill-box">
+                    <p style="color: #666; margin-bottom: 10px;">Total Amount Due</p>
+                    <div class="bill-amount" id="billAmount">₹0</div>
+                </div>
+                <button class="btn" style="background: #28a745; margin-bottom: 20px;" onclick="processPayment()">✓ Pay Now</button>
+                <div class="payment-success" id="paymentSuccess">
+                    <h3>✅ Payment Successful!</h3>
+                    <p style="margin-top: 10px;">Your charging session has been completed and payment received.</p>
+                    <button class="btn" style="margin-top: 15px;" onclick="backToCharging()">← Back to Charging</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================================
+        //  All data lives on the Scala backend. This frontend ONLY
+        //  calls the REST APIs - it stores nothing itself.
+        // ==========================================================
+        const API = 'http://localhost:8080';
+
+        // One helper to call any backend API.
+        // Sends JSON, returns the parsed JSON response, throws on error.
+        async function api(path, method = 'GET', body = null) {
+            const opts = { method, headers: {} };
+            if (body) {
+                opts.headers['Content-Type'] = 'application/json';
+                opts.body = JSON.stringify(body);
+            }
+            const res = await fetch(API + path, opts);
+            const text = await res.text();
+            if (!res.ok) throw new Error(text || 'Request failed');
+            try { return JSON.parse(text); } catch { return text; }
+        }
+
+        // Tab navigation
+        function showTab(tabName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Output helper
+        function showOutput(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `output show ${type}`;
+        }
+
+        // Register Driver -> calls POST /api/driver/register
+        async function registerDriver() {
+            const name = document.getElementById('driverName').value.trim();
+            const email = document.getElementById('driverEmail').value.trim();
+            const phone = document.getElementById('driverPhone').value.trim();
+
+            if (!name || !email || !phone) {
+                showOutput('driverOutput', '❌ Please fill all fields', 'error');
+                return;
+            }
+
+            try {
+                const d = await api('/api/driver/register', 'POST', { name, email, phone });
+                showOutput('driverOutput', `✅ Driver registered!\n\n📋 ID: ${d.id}\n👤 Name: ${d.name}`, 'success');
+                document.getElementById('driverName').value = '';
+                document.getElementById('driverEmail').value = '';
+                document.getElementById('driverPhone').value = '';
+            } catch (e) {
+                showOutput('driverOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // Register Station -> calls POST /api/station/register
+        async function registerStation() {
+            const name = document.getElementById('stationName').value.trim();
+            const locationStr = document.getElementById('stationLocation').value;
+
+            if (!name || !locationStr) {
+                showOutput('stationOutput', '❌ Please fill all fields', 'error');
+                return;
+            }
+
+            const [locName, lat, lon] = locationStr.split('|');
+
+            try {
+                const s = await api('/api/station/register', 'POST', {
+                    name, latitude: parseFloat(lat), longitude: parseFloat(lon)
+                });
+                showOutput('stationOutput', `✅ Station registered!\n\n📋 ID: ${s.id}\n📍 Name: ${s.name}\n📍 Location: ${locName}`, 'success');
+                document.getElementById('stationName').value = '';
+                document.getElementById('stationLocation').value = '';
+            } catch (e) {
+                showOutput('stationOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // Add Connector -> calls POST /api/connector/add
+        async function addConnector() {
+            const stationId = document.getElementById('connectorStationId').value.trim();
+            const type = document.getElementById('connectorType').value;
+            const power = parseFloat(document.getElementById('connectorPower').value);
+
+            if (!stationId) {
+                showOutput('connectorOutput', '❌ Enter a Station ID', 'error');
+                return;
+            }
+
+            try {
+                const c = await api('/api/connector/add', 'POST', {
+                    stationId, connectorType: type, power
+                });
+                showOutput('connectorOutput', `✅ Connector added!\n\n📋 ID: ${c.id}\n⚡ Type: ${c.connectorType}\n💪 Power: ${c.power}kW\n\n👉 Click "View Connectors" to see all connectors at this station.`, 'success');
+            } catch (e) {
+                showOutput('connectorOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // View all connectors at a station -> calls GET /api/station/{id}/connectors
+        async function viewConnectors() {
+            const stationId = document.getElementById('connectorStationId').value.trim();
+            if (!stationId) {
+                showOutput('connectorOutput', '❌ Enter a Station ID first', 'error');
+                return;
+            }
+
+            try {
+                const list = await api(`/api/station/${stationId}/connectors`);
+                if (!list.length) {
+                    showOutput('connectorOutput', '📋 No connectors added yet at this station', 'info');
+                    return;
+                }
+                let msg = `🔌 Connectors at ${stationId} (${list.length}):\n\n`;
+                list.forEach((c, i) => {
+                    const status = !c.inService ? '🚫 Out of service' : (c.free ? '🟢 Free' : '🔴 In use');
+                    msg += `${i + 1}. ${c.id}\n   ⚡ ${c.connectorType} | 💪 ${c.power}kW | ${status}\n\n`;
+                });
+                showOutput('connectorOutput', msg, 'success');
+            } catch (e) {
+                showOutput('connectorOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // Start Session -> calls POST /api/session/start
+        async function startSession() {
+            const driverId = document.getElementById('sessionDriverId').value.trim();
+            const stationId = document.getElementById('sessionStationId').value.trim();
+            const connectorType = document.getElementById('sessionConnectorType').value;
+            const promoCode = document.getElementById('sessionPromo').value.trim() || null;
+
+            if (!driverId || !stationId) {
+                showOutput('startSessionOutput', '❌ Enter Driver ID and Station ID', 'error');
+                return;
+            }
+
+            try {
+                const body = { driverId, stationId, connectorType };
+                if (promoCode) body.promoCode = promoCode;
+                const s = await api('/api/session/start', 'POST', body);
+                showOutput('startSessionOutput',
+                    `✅ Session started!\n\n📋 Session ID: ${s.sessionId}\n💰 Min Charge: ₹${s.baseCost}\n💯 Discount: ${s.discount}%\n\n👉 Copy the Session ID to End Session below.`, 'success');
+                document.getElementById('sessionPromo').value = '';
+            } catch (e) {
+                showOutput('startSessionOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // End Session -> calls POST /api/session/end (backend calculates the bill)
+        async function endSession() {
+            const sessionId = document.getElementById('endSessionId').value.trim();
+            const energy = parseFloat(document.getElementById('endSessionEnergy').value);
+
+            if (!sessionId || isNaN(energy)) {
+                showOutput('endSessionOutput', '❌ Enter Session ID and Energy', 'error');
+                return;
+            }
+
+            try {
+                const r = await api('/api/session/end', 'POST', {
+                    sessionId, energyDelivered: energy
+                });
+                showOutput('endSessionOutput', `✅ Session complete!\n\n💳 Final Bill: ₹${r.finalCost}`, 'success');
+                document.getElementById('payBtn').style.display = 'block';
+                window.currentBill = { sessionId, amount: r.finalCost };
+                document.getElementById('endSessionId').value = '';
+                document.getElementById('endSessionEnergy').value = '';
+            } catch (e) {
+                showOutput('endSessionOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // Go to Payment
+        function goToPayment() {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('paymentPage').classList.add('active');
+            document.getElementById('billAmount').textContent = `₹${window.currentBill.amount}`;
+        }
+
+        // Process Payment
+        function processPayment() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+
+            setTimeout(() => {
+                document.getElementById('paymentSuccess').classList.add('show');
+                btn.style.display = 'none';
+
+                setTimeout(() => {
+                    backToCharging();
+                }, 2000);
+            }, 800);
+        }
+
+        // Back to Charging
+        function backToCharging() {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('charging').classList.add('active');
+            document.getElementById('paymentSuccess').classList.remove('show');
+            document.getElementById('payBtn').style.display = 'none';
+
+            const payBtn = document.querySelector('#paymentPage .btn');
+            payBtn.disabled = false;
+            payBtn.textContent = '✓ Pay Now';
+            payBtn.style.display = 'block';
+        }
+
+        // View History -> calls GET /api/history/driver/{id}
+        async function viewHistory() {
+            const driverId = document.getElementById('historyDriverId').value.trim();
+            if (!driverId) {
+                showOutput('historyOutput', '❌ Enter a Driver ID', 'error');
+                return;
+            }
+
+            try {
+                const sessions = await api(`/api/history/driver/${driverId}`);
+                if (!sessions.length) {
+                    showOutput('historyOutput', '📋 No sessions yet for this driver', 'info');
+                    return;
+                }
+                let msg = `✅ Sessions (${sessions.length}):\n\n`;
+                let totalSpent = 0;
+                sessions.forEach((s, i) => {
+                    totalSpent += s.cost;
+                    msg += `${i + 1}. ${s.sessionId}\n   🏢 Station: ${s.stationOrDriverId}\n   💪 Energy: ${s.energy} kWh\n   💰 Cost: ₹${s.cost}\n\n`;
+                });
+                msg += `━━━━━━━━━━━━━━━━\n📊 Total Spent: ₹${totalSpent}`;
+                showOutput('historyOutput', msg, 'success');
+            } catch (e) {
+                showOutput('historyOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // Create Promo -> calls POST /api/promo/create
+        async function createPromo() {
+            const code = document.getElementById('promoCode').value.trim();
+            const discount = parseInt(document.getElementById('promoDiscount').value);
+
+            if (!code || !discount) {
+                showOutput('promoOutput', '❌ Please fill all fields', 'error');
+                return;
+            }
+
+            try {
+                const p = await api('/api/promo/create', 'POST', {
+                    code, discountPercent: discount
+                });
+                showOutput('promoOutput', `✅ Promo created!\n\n🎟️ Code: ${p.code}\n💯 Discount: ${p.discountPercent}%`, 'success');
+                document.getElementById('promoCode').value = '';
+                document.getElementById('promoDiscount').value = '';
+            } catch (e) {
+                showOutput('promoOutput', '❌ ' + e.message, 'error');
+            }
+        }
+
+        // Load Demo -> creates a driver, station, 2 connectors and promos via real APIs
+        async function loadDemo() {
+            try {
+                const d = await api('/api/driver/register', 'POST', {
+                    name: 'Raj Kumar', email: 'raj@test.com', phone: '9876543210'
+                });
+                const s = await api('/api/station/register', 'POST', {
+                    name: 'Central Hub', latitude: 16.3067, longitude: 80.4365
+                });
+                const c1 = await api('/api/connector/add', 'POST', {
+                    stationId: s.id, connectorType: 'DC', power: 50
+                });
+                const c2 = await api('/api/connector/add', 'POST', {
+                    stationId: s.id, connectorType: 'AC', power: 22
+                });
+                await api('/api/promo/create', 'POST', { code: 'SAVE20', discountPercent: 20 });
+                await api('/api/promo/create', 'POST', { code: 'WELCOME30', discountPercent: 30 });
+
+                showOutput('demoOutput',
+                    `✅ Demo loaded on the server!\n\n👤 Driver: ${d.id} (Raj Kumar)\n🏢 Station: ${s.id} (Central Hub)\n🔌 Connector 1: ${c1.id} (DC, 50kW)\n🔌 Connector 2: ${c2.id} (AC, 22kW)\n\n🎟️ Promos: SAVE20, WELCOME30\n\n👉 Use these IDs in the Charging tab.`, 'success');
+            } catch (e) {
+                showOutput('demoOutput', '❌ ' + e.message + '\n\n⚠️ Is the server running on port 8080?', 'error');
+            }
+        }
+    </script>
+</body>
+</html>

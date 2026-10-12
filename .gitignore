@@ -1,0 +1,14 @@
+target/
+project/target/
+.idea/
+*.iml
+*.swp
+*.swo
+*~
+.DS_Store
+.metals/
+.vscode/
+*.log
+dist/
+build/
+.bsp/
